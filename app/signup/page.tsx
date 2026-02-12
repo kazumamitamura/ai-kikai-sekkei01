@@ -50,7 +50,16 @@ export default function SignUpPage() {
       });
 
       if (signUpError) {
-        setError(signUpError.message);
+        // 既に登録済み → ログイン案内（他アプリ含め同一プロジェクトで1メール1アカウントのため）
+        const isAlreadyRegistered =
+          signUpError.message.toLowerCase().includes("already registered") ||
+          signUpError.message.toLowerCase().includes("already exists") ||
+          signUpError.code === "user_already_exists";
+        setError(
+          isAlreadyRegistered
+            ? "このメールアドレスは既に登録されています。ログインしてください。"
+            : signUpError.message
+        );
         return;
       }
 
@@ -85,7 +94,15 @@ export default function SignUpPage() {
             {/* エラー表示 */}
             {error && (
               <div className="rounded-md bg-[var(--destructive)]/10 p-3 text-sm text-[var(--destructive)]">
-                {error}
+                <p>{error}</p>
+                {error.includes("既に登録されています") && (
+                  <Link
+                    href="/login"
+                    className="mt-2 inline-block font-medium text-[var(--primary)] underline hover:no-underline"
+                  >
+                    ログインページへ →
+                  </Link>
+                )}
               </div>
             )}
 

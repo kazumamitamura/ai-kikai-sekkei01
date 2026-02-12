@@ -55,7 +55,7 @@ export async function updateSession(request: NextRequest) {
 
   // 認証済みユーザーのロールベースリダイレクト
   if (user) {
-    // プロフィールからロールを取得
+    // プロフィールからロールを取得（他アプリで登録したユーザーは sk01_profiles にいない）
     const { data: profile } = await supabase
       .from("sk01_profiles")
       .select("role")
@@ -63,6 +63,15 @@ export async function updateSession(request: NextRequest) {
       .single();
 
     const role = profile?.role as string | undefined;
+    const hasSk01Profile = role === "teacher" || role === "student";
+
+    // このアプリのユーザーではない（sk01_profiles にいない）→ ログインへ（ループ防止）
+    if (!hasSk01Profile && (pathname.startsWith("/teacher") || pathname.startsWith("/student"))) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("message", "このアプリには新規登録が必要です。");
+      return NextResponse.redirect(url);
+    }
 
     // ログイン・サインアップページにアクセスした場合 → ダッシュボードへ
     if (isPublicPath) {
